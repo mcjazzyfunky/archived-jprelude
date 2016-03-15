@@ -1,0 +1,8 @@
+/.idea
+/jprelude-parent.iml
+/jprelude-core/jprelude-core.iml
+/jprelude-core/target/
+/jprelude-core/nbproject/private/
+/jprelude-csv/jprelude-csv.iml
+/jprelude-csv/target/
+/jprelude-csv/nbproject/private/

@@ -31,9 +31,8 @@ public class CsvValidator {
             final StringBuilder violation = new StringBuilder();
             final String columnName = columnRule.getColumnName();
             final String columnValue = rec.get(columnName);        
-            final CsvField checker = new CsvField(columnValue);
-            
-            if (!columnRule.getPredicate().test(checker)) {
+
+            if (!columnRule.getPredicate().test(columnValue)) {
                 String shortenedColumnValue =
                         (columnValue != null ? columnValue : "")
                         .replaceAll("(\\r|\\n|\\t| )+", " ");
@@ -127,8 +126,8 @@ public class CsvValidator {
         private final List<RecordConstraint> recordRules;
         
         private Builder() {
-            this.columnRules = new ArrayList();
-            this.recordRules = new ArrayList();
+            this.columnRules = new ArrayList<>();
+            this.recordRules = new ArrayList<>();
         }
         
         public CsvValidator build() {
@@ -138,7 +137,7 @@ public class CsvValidator {
         public Builder validateColumn(
                 final String columnName,
                 final String hint,
-                final Predicate<CsvField> predicate) {
+                final Predicate<String> predicate) {
             
             Objects.requireNonNull(columnName);
             Objects.requireNonNull(hint);
@@ -163,12 +162,12 @@ public class CsvValidator {
     private final static class ColumnConstraint {
         private String columnName;
         private String hint;
-        private Predicate<CsvField> predicate;
+        private Predicate<String> predicate;
         
         private ColumnConstraint(
                 final String columnName,
                 final String hint,
-                final Predicate<CsvField> predicate) {
+                final Predicate<String> predicate) {
             
             assert columnName != null;
             assert hint != null;
@@ -187,7 +186,7 @@ public class CsvValidator {
             return this.hint;
         }
         
-        private Predicate<CsvField> getPredicate() {
+        private Predicate<String> getPredicate() {
             return this.predicate;
         }
     }
@@ -202,6 +201,9 @@ public class CsvValidator {
             
             assert hint != null;
             assert predicate != null;
+
+            this.hint = hint;
+            this.predicate = predicate;
         }
         
         private String getRule() {

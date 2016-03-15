@@ -14,6 +14,7 @@ import jprelude.core.io.TextReader;
 import jprelude.core.io.TextWriter;
 import jprelude.core.util.Seq;
 import org.junit.Test;
+import static jprelude.csv.base.CsvFieldFunctions.*;
 
 public class DemoTest {
     @Test 
@@ -87,11 +88,11 @@ public class DemoTest {
                     .validateColumn(
                            "Artikelnummer",
                            "Must have a length of exactly 10 characters",
-                           artNo -> artNo.hasLength(10))
+                           artNo -> hasLength(artNo, 10))
                     .validateColumn(
                            "Preis/Einheit",
                            "Must be a floating point number greater than 0",
-                           price -> price.isFloat() && price.isGreater(0))
+                           price -> isFloat(price) && isGreater(price, 0))
                     .build();
 
             CsvImporter<CsvRecord> importer = CsvImporter.<CsvRecord>builder()

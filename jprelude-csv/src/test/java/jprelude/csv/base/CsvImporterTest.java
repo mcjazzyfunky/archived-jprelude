@@ -3,6 +3,7 @@ package jprelude.csv.base;
 import jprelude.core.io.TextReader;
 import jprelude.core.util.LineSeparator;
 import jprelude.core.util.Seq;
+import static jprelude.csv.base.CsvFieldFunctions.*;
 import org.junit.Test;
 
 public class CsvImporterTest {
@@ -30,7 +31,7 @@ public class CsvImporterTest {
                 .validateColumn(
                         "COLUMN1",
                         "Must have a fixed length of 2",
-                        col1 -> col1.hasLength(2))
+                        col1 -> hasLength(col1, 2))
                 .build();
 
         final CsvImporter<String> importer = CsvImporter.<String>builder()

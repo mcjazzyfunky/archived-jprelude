@@ -20,6 +20,6 @@ public class CsvExporterTest {
                 .mapper(n -> Arrays.asList("A" + n, "B" + n, "C" + n))
                 .build();
         
-        csvExporter.export(seq, TextWriter.forOutputStream(System.out));
+        csvExporter.export(seq, TextWriter.fromOutputStream(System.out));
     }
 }

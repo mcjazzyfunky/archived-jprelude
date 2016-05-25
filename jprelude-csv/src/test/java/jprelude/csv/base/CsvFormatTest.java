@@ -43,7 +43,7 @@ public class CsvFormatTest {
             .recordSeparator(LineSeparator.SYSTEM)
             .quoteMode(CsvQuoteMode.ALL)
             .build()
-            .prepareExportTo(TextWriter.forFile(Paths.get("/home/kenny/test.juhu")))
+            .prepareExportTo(TextWriter.fromFile(Paths.get("/home/kenny/test.juhu")))
             .apply(records.map(n -> 
                 Arrays.asList("   a" + n, "b" + n, "c" + n)))
             .ifErrorFail()
@@ -72,7 +72,7 @@ public class CsvFormatTest {
             .recordSeparator(LineSeparator.SYSTEM)
             .quoteMode(CsvQuoteMode.ALL)
             .build()
-            .parse(TextReader.forString(csvData))
+            .parse(TextReader.fromString(csvData))
             .forEach(rec -> System.out.println(rec.getIndex() + ": " + rec.get(Column.COLUMN1) + "-" + rec.get(Column.COLUMN2) + "-" + rec.get(Column.COLUMN3)));
     }    
 
@@ -108,7 +108,7 @@ public class CsvFormatTest {
             .recordSeparator(LineSeparator.SYSTEM)
             .quoteMode(CsvQuoteMode.ALL)
             .build()
-            .parse(TextReader.forString(csvData))
+            .parse(TextReader.fromString(csvData))
             //.peek(validator.asConsumer())
             .filter(validator.asFilter())
              //.forEach(System.out::println);

@@ -14,24 +14,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import jprelude.core.util.Seq;
 import jprelude.core.util.function.CheckedPredicate;
 
-public interface PathSelector {
+public interface PathScanner {
 
-    Seq<Path> list(final Path path);
+    Seq<Path> scan(final Path path);
 
     public static Builder builder() {
         return new Builder();
     }
-   
+
     public static Builder builder(final Builder prototype) {
         final Builder ret = new Builder();
-        
+
         ret.recursive = prototype.recursive;
         ret.maxDepth = prototype.maxDepth;
         ret.linkOptions = Seq.of(prototype.linkOptions).toArray(LinkOption[]::new);
@@ -50,7 +49,7 @@ public interface PathSelector {
         private final List<CheckedPredicate<? super PathEntry, IOException>> excludes;
         private final List<CheckedPredicate<? super PathEntry, IOException>> recursionRestrictions;
         private boolean excludeUnreadableDirectoriesFromRecursion;
-        
+
         private Builder() {
             this.maxDepth = Integer.MAX_VALUE;
             this.recursive = false;
@@ -79,13 +78,13 @@ public interface PathSelector {
         public Builder maxDepth(final int maxDepth) {
             if (maxDepth <= 0) {
                 throw new IllegalArgumentException(
-                        "IAE PathSelector.Builder.maxDepth(maxDepth)");
+                        "IAE PathScanner.Builder.maxDepth(maxDepth)");
             }
 
             this.maxDepth = maxDepth;
             return this;
         }
-        
+
         public Builder unlimitedDepth() {
             this.maxDepth = Integer.MAX_VALUE;
             return this;
@@ -145,7 +144,7 @@ public interface PathSelector {
 
             return this;
         }
-        
+
         public Builder includeAll() {
             this.include(p -> true);
             return this;
@@ -255,14 +254,14 @@ public interface PathSelector {
 
             return this;
         }
-        
+
         public Builder excludeInaccessibleDirectoriesFromRecursion(final boolean excludeUnreadableDirectoriesFromRecursion) {
             this.excludeUnreadableDirectoriesFromRecursion = excludeUnreadableDirectoriesFromRecursion;
             return this;
         }
 
-        public PathSelector build() {
-            return new PathSelector() {
+        public PathScanner build() {
+            return new PathScanner() {
                 final boolean recursive = Builder.this.recursive;
                 final int maxDepth = Builder.this.maxDepth;
                 final LinkOption[] linkOptions = Builder.this.linkOptions;
@@ -273,21 +272,21 @@ public interface PathSelector {
                         = new ArrayList<>(Builder.this.recursionRestrictions);
 
                 @Override
-                public Seq<Path> list(final Path path) {
+                public Seq<Path> scan(final Path path) {
                     Objects.requireNonNull(path);
 
-                    return this.listDirectoryFilteredAndRecursive(
+                    return this.scanDirectoryFilteredAndRecursive(
                             Builder.createPathEntry(path, linkOptions),
                             maxDepth).map(PathEntry::getPath);
                 }
 
-                private Seq<PathEntry> listDirectoryFilteredAndRecursive(
+                private Seq<PathEntry> scanDirectoryFilteredAndRecursive(
                         final PathEntry pathEntry,
                         final int maxDepth) {
 
                     assert pathEntry != null;
 
-                    return this.listDirectoryUnfilteredAndNonrecursive(pathEntry.getPath(), true).flatMap(subPath -> {
+                    return this.scanDirectoryUnfilteredAndNonRecursive(pathEntry.getPath(), true).flatMap(subPath -> {
                         Seq<PathEntry> ret;
                         final PathEntry subPathEntry = Builder.createPathEntry(subPath);
 
@@ -310,7 +309,7 @@ public interface PathSelector {
                                                     pred -> !pred.test(subPathEntry)));
 
                             ret = descent
-                                    ? this.listDirectoryFilteredAndRecursive(
+                                    ? this.scanDirectoryFilteredAndRecursive(
                                             subPathEntry,
                                             maxDepth - 1)
                                     : (!involve ? Seq.empty() : Seq.of(subPathEntry));
@@ -328,7 +327,7 @@ public interface PathSelector {
                     });
                 }
 
-                private Seq<Path> listDirectoryUnfilteredAndNonrecursive(
+                private Seq<Path> scanDirectoryUnfilteredAndNonRecursive(
                         final Path path,
                         final boolean isRoot) {
 
@@ -343,7 +342,7 @@ public interface PathSelector {
                             } else {
                                 final DirectoryStream<Path> dirStream = Files.newDirectoryStream(path, file -> true);
                                 ret = StreamSupport.stream(dirStream.spliterator(), false);
-                            }                            
+                            }
                         } catch (final SecurityException e) {
                             if (!isRoot && Builder.this.excludeUnreadableDirectoriesFromRecursion) {
                                 ret = Stream.empty();
@@ -360,11 +359,11 @@ public interface PathSelector {
             };
         }
 
-        
+
         private static Map<FileSystem, Map<String, PathMatcher>> patternMatcherCache =
                 new ConcurrentHashMap<>();
 
- 
+
         private static PathEntry createPathEntry(final Path path, final LinkOption... linkOptions) {
             Objects.requireNonNull(path);
 
@@ -374,7 +373,7 @@ public interface PathSelector {
 
             return new PathEntry() {
                 private PathEntry byName = null;
-                
+
                 @Override
                 public Path getPath() {
                     return path;
@@ -384,20 +383,20 @@ public interface PathSelector {
                 public LinkOption[] getDefaultLinkOptions() {
                     return filteredLinkOptions;
                 }
-                
+
                 @Override
                 public boolean matches(final String... patterns) {
                     return Seq.of(patterns)
                             .rejectNulls()
                             .anyMatch(pattern -> this.checkMatching(
-                                    path, pattern)); 
+                                    path, pattern));
                 }
-                
+
                 private boolean checkMatching(final Path path, final String pattern) {
                     assert path != null;
-                    
+
                     final FileSystem fileSystem = path.getFileSystem();
-                    
+
                     final Map<String, PathMatcher> map = Builder
                             .patternMatcherCache
                             .computeIfAbsent(fileSystem, fs ->
@@ -405,9 +404,9 @@ public interface PathSelector {
                                     @Override
                                     protected boolean removeEldestEntry(final Map.Entry<String, PathMatcher> eldest) {
                                         return size() > 200;
-                                    }                                    
+                                    }
                                 });
-                
+
                     final PathMatcher pathMatcher = map.computeIfAbsent(
                             pattern,
                             pat -> {
@@ -415,14 +414,14 @@ public interface PathSelector {
                                         pattern.matches("^[a-zA-z][a-zA-Z0-9]*\\:$")
                                         ? pattern
                                         : "glob:" + pattern;
-                                
+
                                 return fileSystem
                                         .getPathMatcher(syntaxAndPattern);
                             });
-                    
+
                     return pathMatcher.matches(path);
                 }
-                
+
                 @Override
                 public PathEntry byName() {
                     return this.pathEntryByName;

@@ -43,7 +43,7 @@ public class CsvImporterTest {
                 .mapper(rec -> rec.get("COLUMN1") + "|" + rec.get("COLUMN2") + "|" + rec.get("COLUMN3"))
                 .build();
 
-        final Seq<String> strings = importer.parse(TextReader.forString(csvData));
+        final Seq<String> strings = importer.parse(TextReader.fromString(csvData));
 
         strings.forEach(System.out::println);
     }

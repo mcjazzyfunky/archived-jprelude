@@ -16,7 +16,7 @@ public class SeqTest {
         final Seq<Long> seq = Seq.of(1, 2, 3)
             .map((x, i) -> x * 2 + i);
 
-        Seq.from((start, blockSize) -> Seq.range(start.intValue(), blockSize.intValue() + start.intValue()).toList(), 100L).take(150)
+        Seq.from((start, blockSize) -> Seq.range(start.intValue(), blockSize.intValue() + start.intValue()).toList(), 100L).limit(150)
             .parallel()
             .forEach(v ->  {synchronized (this) { System.out.println("[" + v + "]");}});
         

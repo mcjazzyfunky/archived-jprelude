@@ -10,10 +10,10 @@ public enum LineSeparator {
     
     final String value;
     
-    private LineSeparator(final String value) {
+    LineSeparator(final String value) {
         this.value = value;
     }
-    
+
     public final String value() {
         return this.value;
     }

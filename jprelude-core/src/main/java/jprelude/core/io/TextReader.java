@@ -26,16 +26,15 @@ import jprelude.core.util.function.CheckedSupplier;
 public interface TextReader {
     InputStream newInputStream() throws IOException;
     Charset getCharset();
-    URI getUri();
-    
-    default String readFullText() throws IOException {
+
+    default String readFully() throws IOException {
         final CharBuffer charBuffer = CharBuffer.allocate(8096);
         final StringBuilder strBuilder = new StringBuilder();
                 
         try(
-                final InputStream inputStream = this.newInputStream();
-                final BufferedReader bufferedReader = new BufferedReader(
-                        new InputStreamReader(inputStream, this.getCharset().name()))) {
+            final InputStream inputStream = this.newInputStream();
+            final BufferedReader bufferedReader = new BufferedReader(
+                new InputStreamReader(inputStream, this.getCharset().name()))) {
                 
             while (bufferedReader.read(charBuffer) > 0) {
                strBuilder.append(charBuffer.toString());
@@ -45,7 +44,7 @@ public interface TextReader {
         return strBuilder.toString();
     }
 
-    default Seq<String> readLines() {
+    default Seq<String> readSeq() {
         return Seq.from(() -> {
             final BufferedReader bufferedReader;
 
@@ -57,7 +56,7 @@ public interface TextReader {
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             } catch (final RuntimeException e) {
-                throw (RuntimeException) e;
+                throw e;
             } catch (final Throwable e) {
                 throw  new RuntimeException(e);
             }
@@ -143,24 +142,19 @@ public interface TextReader {
             public Charset getCharset() {
                 return nonNullCharset;
             }
-            
-            @Override
-            public URI getUri() {
-                return uri;
-            }
         };
     }
         
-    public static TextReader forFile(
+    public static TextReader fromFile(
             final Path path,
             OpenOption... openOptions) {
         
         Objects.requireNonNull(path);
         
-        return TextReader.forFile(path, StandardCharsets.UTF_8, openOptions);
+        return TextReader.fromFile(path, StandardCharsets.UTF_8, openOptions);
     }
     
-    public static TextReader forFile(
+    public static TextReader fromFile(
             final Path path,
             final Charset charset,
             final OpenOption... openOptions) {
@@ -178,11 +172,11 @@ public interface TextReader {
                 path.toUri());
     }
     
-    public static TextReader forInputStream(final InputStream inputStream) {
-        return TextReader.forInputStream(inputStream, null);
+    public static TextReader fromInputStream(final InputStream inputStream) {
+        return TextReader.fromInputStream(inputStream, null);
     }
     
-    public static TextReader forInputStream(final InputStream inputStream, final Charset charset) {
+    public static TextReader fromInputStream(final InputStream inputStream, final Charset charset) {
         Objects.requireNonNull(inputStream);
         
         final CheckedSupplier<InputStream, IOException> supplier = () -> new InputStream() {
@@ -213,7 +207,7 @@ public interface TextReader {
                 null);
     }
     
-    static TextReader forString(final String text) {
+    static TextReader fromString(final String text) {
         Objects.requireNonNull(text);
 
         return TextReader.create(
@@ -221,6 +215,4 @@ public interface TextReader {
                 StandardCharsets.UTF_8,
                 null);
     }
-    
-    
 }

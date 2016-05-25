@@ -7,8 +7,8 @@ import org.junit.Test;
 public class TextReaderTest {
     @Test
     public void testSomething() {
-        TextReader.forFile(Paths.get("./src/test/java/jprelude/core/io/TextReaderTest.java"))
-                .readLines()
+        TextReader.fromFile(Paths.get("./src/test/java/jprelude/core/io/TextReaderTest.java"))
+                .readSeq()
                 .toStringList()
                 .forEach(System.out::println);
     }

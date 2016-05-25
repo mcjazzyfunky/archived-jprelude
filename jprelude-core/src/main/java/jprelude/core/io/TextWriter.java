@@ -25,16 +25,17 @@ public interface TextWriter {
 
     OutputStream newOutputStream() throws IOException;
 
-    default long writeLines(final Seq<?> lines) throws IOException {
-        Objects.requireNonNull(lines);
+    default long writeSeq(final Seq<? extends CharSequence> rows) throws IOException {
+        Objects.requireNonNull(rows);
 
-        return this.writeLines(lines, LineSeparator.LF);
+        return this.writeSeq(rows, LineSeparator.LF);
     }
 
-    default long writeLines(final Seq<?> lines, LineSeparator lineSeparator)
+    default long writeSeq(final Seq<? extends CharSequence> rows, final LineSeparator lineSeparator)
             throws IOException {
 
-        Objects.requireNonNull(lines);
+        Objects.requireNonNull(rows);
+
         final long ret;
    
         final String lineSeparatorValue
@@ -47,7 +48,7 @@ public interface TextWriter {
                     true,
                     this.getCharset().name())) {
      
-            ret = Seq.sequential(lines)
+            ret = Seq.sequential(rows)
                     .peek(line -> {
                         printStream.print(line);
                         printStream.print(lineSeparatorValue);
@@ -63,8 +64,8 @@ public interface TextWriter {
         return ret;
     }
 
-    default void writeFullText(final Object text) throws IOException {
-        this.writeLines(Seq.of(Objects.toString(text, "")), LineSeparator.NONE);
+    default void writeFully(final String text) throws IOException {
+        this.writeSeq(Seq.of(Objects.toString(text, "")), LineSeparator.NONE);
     }
 
     static TextWriter create(
@@ -104,16 +105,16 @@ public interface TextWriter {
         };
     }
 
-    static TextWriter forFile(
+    static TextWriter fromFile(
             final Path path,
             final OpenOption... openOptions) {
 
         Objects.requireNonNull(path);
 
-        return TextWriter.forFile(path, null, openOptions);
+        return TextWriter.fromFile(path, null, openOptions);
     }
 
-    static TextWriter forFile(
+    static TextWriter fromFile(
             final Path path,
             final Charset charset,
             final OpenOption... openOptions) {
@@ -131,13 +132,13 @@ public interface TextWriter {
                 path.toUri());
     }
 
-    static TextWriter forOutputStream(final OutputStream outputStream) {
+    static TextWriter fromOutputStream(final OutputStream outputStream) {
         Objects.requireNonNull(outputStream);
 
-        return TextWriter.forOutputStream(outputStream, null);
+        return TextWriter.fromOutputStream(outputStream, null);
     }
 
-    static TextWriter forOutputStream(
+    static TextWriter fromOutputStream(
             final OutputStream outputStream,
             final Charset charset) {
 

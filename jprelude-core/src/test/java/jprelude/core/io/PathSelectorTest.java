@@ -10,7 +10,7 @@ import org.junit.Test;
 public class PathSelectorTest {
     @Test
     public void testSomething() throws Exception {  
-       final Seq<Path> files = PathSelector.builder()
+       final Seq<Path> files = PathScanner.builder()
                .recursive(dir -> !dir.matches("**/*report*"))               
                .include(file -> file.isRegularFile() && file.matches("**/*.java") &&  file.getModifiedTime() != null)
                //.maxDepth(3)
@@ -18,7 +18,7 @@ public class PathSelectorTest {
                .exclude(file -> file.getElapsedTimeCreation(ChronoUnit.HOURS) >= 1)
                .excludeInaccessibleDirectoriesFromRecursion(true)
                .build()
-               .list(Paths.get("./"));
+               .scan(Paths.get("./"));
        files.forEach(System.out::println);
        
     }

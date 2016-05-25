@@ -1,5 +1,11 @@
 package jprelude.csv.base;
 
+import jprelude.core.io.PathScanner;
+import jprelude.core.io.TextReader;
+import jprelude.core.io.TextWriter;
+import jprelude.core.util.Seq;
+import org.junit.Test;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -8,36 +14,33 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Comparator;
 import java.util.function.Consumer;
-import jprelude.core.io.PathSelector;
-import jprelude.core.io.TextReader;
-import jprelude.core.io.TextWriter;
-import jprelude.core.util.Seq;
-import org.junit.Test;
+
 import static jprelude.csv.base.CsvFieldFunctions.*;
 
 public class DemoTest {
-    @Test 
+    @Test
     public void testPriceFilesTransformation() {
         final String inputFolder = "/home/kenny/tests/input/prices/";
-        final String inputFilesPattern = "**/prices-????-??-??.csv";    
+        final String inputFilesPattern = "**/prices-????-??-??.csv";
         final String outputFile = "/home/kenny/tests/output/prices.txt";
-        
+
         final PriceFilesTransformer transformer = new PriceFilesTransformer(
                 Paths.get(inputFolder),
                 inputFilesPattern,
-                TextWriter.forFile(Paths.get(outputFile)),
-                //TextWriter.forOutputStream(System.out),
-                
-                //TextWriter.forFile(Paths.get("/dev/null")),
-                
+                TextWriter.fromFile(Paths.get(outputFile)),
+                //TextWriter.fromOutputStream(System.out),
+
+                //TextWriter.fromFile(Paths.get("/dev/null")),
+
                 false,
                 System.out::println
                 );
-        
+
         transformer.run();
     }
- 
+
     public static class PriceFilesTransformer {
         private final Path inputFolder;
         private final String inputFilesPattern;
@@ -109,19 +112,19 @@ public class DemoTest {
                             rec.get("Preis/Einheit")))
                     .build();
 
-            Seq<Path> inputFiles = PathSelector.builder()
+            Seq<Path> inputFiles = PathScanner.builder()
                     .includeRegularFiles(this.inputFilesPattern)
                     .build()
-                    .list(this.inputFolder)
+                    .scan(this.inputFolder)
                     .forceOnDemand() // caches the path entries on first demand (not now!),
                                      // will not traverse the diretory a second time then
-                    .sortedAsc(path -> path.getFileName());
-                    //.sortedDesc(Path::getFileName);
+                    .sorted(Comparator.comparing(Path::getFileName));
+                    //.sorted(Comparator.comparing(Path::getFileName));
 
             Seq<CsvRecord> recs = inputFiles
                 .peek(path -> observers.forEach(
                         visitor -> visitor.onProcessingFile(path)))
-                .flatMap(path -> importer.parse(TextReader.forFile(path)))
+                .flatMap(path -> importer.parse(TextReader.fromFile(path)))
               ;//  .distinct(rec -> rec.get("Artikelnummer"));
 
             this.observers.forEach(Observer::onStart);
@@ -136,7 +139,7 @@ public class DemoTest {
         }
 
         public static interface Observer {
-            void onStart();        
+            void onStart();
             void onProcessingFile(final Path path);
             void onNextRecord(final CsvRecord rec);
             void onDataViolation(final CsvValidationException e);
@@ -194,7 +197,7 @@ public class DemoTest {
                 @Override
                 public void onSuccess(final Seq<Path> inputFiles) {
                     println.accept("");
-                    
+
                     println.accept("Success: "
                                 + inputFiles.count()
                                 + " price file(s) have been transformed.");
@@ -203,7 +206,7 @@ public class DemoTest {
                 @Override
                 public void onError(final Throwable t) {
                     println.accept("");
-                    
+
                     // Print stack trace
                     final Writer writer = new StringWriter();
                     final PrintWriter printWriter = new PrintWriter(writer);
